@@ -43,22 +43,21 @@ pipeline {
             steps {
                 script {
                     sh """
-                    PR_NUMBER=\$(curl -s -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
+                    response=\$(curl -s -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
                         -H "Accept: application/vnd.github.v3+json" \
-                        "https://api.github.com/repos/${GITHUB_REPO}/pulls?head=${SOURCE_BRANCH}" | \
-                        jq '.[0].number')
-
-                    if [ "\$PR_NUMBER" != "null" ]; then
-                        curl -X PUT -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
-                             -H "Accept: application/vnd.github.v3+json" \
-                             https://api.github.com/repos/${GITHUB_REPO}/pulls/\$PR_NUMBER/merge \
-                             -d '{
-                                   "commit_title": "Merging ${SOURCE_BRANCH} into ${TARGET_BRANCH}",
-                                   "merge_method": "squash"
-                               }'
-                    else
-                        echo "No pull request found, skipping merge."
+                        "https://api.github.com/repos/${GITHUB_REPO}/pulls?head=${SOURCE_BRANCH}")
+                    
+                    echo "Raw Response: \$response"
+                    
+                    # If no PR found, print message and exit gracefully
+                    PR_NUMBER=\$(echo \$response | jq '.[0].number' 2>/dev/null)
+                    
+                    if [ -z "\$PR_NUMBER" ]; then
+                      echo "No pull request found for branch ${SOURCE_BRANCH}"
+                      exit 0
                     fi
+                    
+                    echo "PR Number: \$PR_NUMBER"
                     """
                 }
             }
