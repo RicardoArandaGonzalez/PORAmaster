@@ -26,7 +26,7 @@ pipeline {
                     def prBody = "This is an automated PR created by Jenkins."
 
                     sh """
-                    curl -X POST -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
+                    response=\$(curl -s -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
                          -H "Accept: application/vnd.github.v3+json" \
                          https://api.github.com/repos/${GITHUB_REPO}/pulls \
                          -d '{
@@ -34,7 +34,9 @@ pipeline {
                                "head": "${SOURCE_BRANCH}",
                                "base": "${TARGET_BRANCH}",
                                "body": "${prBody}"
-                           }'
+                           }')
+                    
+                    echo "Create PR Response: \$response"
                     """
                 }
             }
@@ -43,24 +45,27 @@ pipeline {
             steps {
                 script {
                     sh """
+                    # Fetch the pull requests with the source branch
                     response=\$(curl -s -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
                         -H "Accept: application/vnd.github.v3+json" \
                         "https://api.github.com/repos/${GITHUB_REPO}/pulls?head=${SOURCE_BRANCH}")
                     
                     echo "Raw Response: \$response"
                     
-                    # If no PR found, print message and exit gracefully
+                    # Check if response contains a pull request
                     PR_NUMBER=\$(echo \$response | jq '.[0].number' 2>/dev/null)
                     
                     if [ -z "\$PR_NUMBER" ]; then
-                      echo "No pull request found for branch ${SOURCE_BRANCH}"
-                      exit 0
+                        echo "No pull request found for branch ${SOURCE_BRANCH}"
+                        exit 0
                     fi
                     
                     echo "PR Number: \$PR_NUMBER"
-                    """
-                }
-            }
-        }
-    }
-}
+                    
+                    # Merge the pull request (if PR exists)
+                    merge_response=\$(curl -X PUT -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        "https://api.github.com/repos/${GITHUB_REPO}/pulls/\$PR_NUMBER/merge" \
+                        -d '{
+                            "commit_title": "Merging ${SOURCE_BRANCH} into ${TARGET_BRANCH}",
+                            "merge
