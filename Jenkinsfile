@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        GITHUB_CREDENTIALS_ID = '55976c2e-1515-4e32-8bbd-d2b5a0ccacd8'  // Set your GitHub credentials ID
+        GITHUB_CREDENTIALS_ID = '60da5fbc-f88e-4c8f-9dfa-e8623b3aebaa'  // Set your GitHub credentials ID
         GITHUB_REPO = 'RicardoArandaGonzalez/PORAmaster' // Replace with actual GitHub repo
         SOURCE_BRANCH = 'PORATesting' // Branch to merge from
         TARGET_BRANCH = 'PORAStaging'  // Branch to merge into
