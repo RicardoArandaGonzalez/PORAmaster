@@ -25,16 +25,21 @@ pipeline {
                     def prTitle = "Merge ${SOURCE_BRANCH} into ${TARGET_BRANCH}"
                     def prBody = "This is an automated PR created by Jenkins."
 
-                    sh """
-                    curl -X POST -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
-                         -H "Accept: application/vnd.github.v3+json" \
-                         https://api.github.com/repos/${GITHUB_REPO}/pulls \
-                         -d '{
-                               "title": "${prTitle}",
-                               "head": "${SOURCE_BRANCH}",
-                               "base": "${TARGET_BRANCH}",
-                               "body": "${prBody}"
-                           }'
+                    powershell """
+                    $headers = @{
+                        Authorization = "token ${GITHUB_CREDENTIALS_ID}"
+                        Accept = "application/vnd.github.v3+json"
+                    }
+                    $body = @{
+                        title = "Merge ${SOURCE_BRANCH} into ${TARGET_BRANCH}"
+                        head = "${SOURCE_BRANCH}"
+                        base = "${TARGET_BRANCH}"
+                        body = "This is an automated PR created by Jenkins."
+                    } | ConvertTo-Json -Depth 10
+                    
+                    $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${GITHUB_REPO}/pulls" -Method Post -Headers $headers -Body $body -ContentType "application/json"
+                    
+                    Write-Host "GitHub Response: $($response | ConvertTo-Json -Depth 10)"
                     """
                 }
             }
