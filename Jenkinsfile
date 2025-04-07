@@ -24,18 +24,20 @@ pipeline {
                 script {
                     def prTitle = "Merge ${SOURCE_BRANCH} into ${TARGET_BRANCH}"
                     def prBody = "This is an automated PR created by Jenkins."
-
-                    sh """
-                    curl -X POST -H "Authorization: token ${GITHUB_CREDENTIALS_ID}" \
-                         -H "Accept: application/vnd.github.v3+json" \
-                         https://api.github.com/repos/${GITHUB_REPO}/pulls \
-                         -d '{
-                               "title": "${prTitle}",
-                               "head": "${SOURCE_BRANCH}",
-                               "base": "${TARGET_BRANCH}",
-                               "body": "${prBody}"
-                           }'
-                    """
+        
+                    withCredentials([string(credentialsId: "${GITHUB_CREDENTIALS_ID}", variable: 'GITHUB_TOKEN')]) {
+                        sh """
+                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                             -H "Accept: application/vnd.github.v3+json" \
+                             https://api.github.com/repos/${GITHUB_REPO}/pulls \
+                             -d '{
+                                   "title": "${prTitle}",
+                                   "head": "${SOURCE_BRANCH}",
+                                   "base": "${TARGET_BRANCH}",
+                                   "body": "${prBody}"
+                               }'
+                        """
+                    }
                 }
             }
         }
